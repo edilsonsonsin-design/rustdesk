@@ -163,6 +163,19 @@ jobs:
           head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log" || true
         shell: bash
 
+      - name: Hardcode RustDesk self-host settings
+        if: matrix.job.target == 'x86_64-pc-windows-msvc'
+        shell: pwsh
+        run: |
+          $file = "libs/hbb_common/src/config.rs"
+          $content = Get-Content $file -Raw
+
+          $content = $content -replace 'pub const RENDEZVOUS_SERVERS:.*?;', 'pub const RENDEZVOUS_SERVERS: &[&str] = &["192.168.3.250"];'
+          $content = $content -replace 'pub const RS_PUB_KEY:.*?;', 'pub const RS_PUB_KEY: &str = "PjjP0baegw7PXhrYpQjQs5sfFBV42vSmBlAl7VHUZWM=";'
+
+          Set-Content -Path $file -Value $content
+          Write-Host "RustDesk self-host settings hardcoded successfully."
+
       - name: Build rustdesk
         run: |
           # Windows: build RustDesk
